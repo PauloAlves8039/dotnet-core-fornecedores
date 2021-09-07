@@ -1,4 +1,6 @@
-﻿using DevIO.Data.Context;
+﻿using DevIO.Business.Interfaces;
+using DevIO.Data.Context;
+using DevIO.Data.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -36,6 +38,11 @@ namespace DevIO.App
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddScoped<FornecedoresDbContext>();
+            services.AddScoped<IProdutoRepository, ProdutoRepository>();
+            services.AddScoped<IFornecedorRepository, FornecedorRepository>();
+            services.AddScoped<IEnderecoRepository, EnderecoRepository>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
