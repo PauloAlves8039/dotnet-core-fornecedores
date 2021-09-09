@@ -1,4 +1,5 @@
-﻿using DevIO.Business.Interfaces;
+﻿using AutoMapper;
+using DevIO.Business.Interfaces;
 using DevIO.Data.Context;
 using DevIO.Data.Repositories;
 using Microsoft.AspNetCore.Builder;
@@ -36,6 +37,7 @@ namespace DevIO.App
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.AddAutoMapper(typeof(Startup));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
