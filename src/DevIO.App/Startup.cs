@@ -1,50 +1,46 @@
 ﻿using AutoMapper;
-using DevIO.Business.Interfaces;
-using DevIO.Data.Context;
-using DevIO.Data.Repositories;
+using DevIO.App.Configurations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using DevIO.Data.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace DevIO.App
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
         public IConfiguration Configuration { get; }
+
+        public Startup(IHostingEnvironment hostEnvironment)
+        {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(hostEnvironment.ContentRootPath)
+                .AddJsonFile("appsettings.json", true, true)
+                .AddJsonFile($"appsettings.{hostEnvironment.EnvironmentName}.json", true, true)
+                .AddEnvironmentVariables();
+
+            if (hostEnvironment.IsDevelopment())
+            {
+                builder.AddUserSecrets<Startup>();
+            }
+
+            Configuration = builder.Build();
+        }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<FornecedoresDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddIdentityConfiguration(Configuration);
 
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
+            services.AddDbContext<MeuDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddAutoMapper(typeof(Startup));
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvcConfiguration();
 
-            services.AddScoped<FornecedoresDbContext>();
-            services.AddScoped<IProdutoRepository, ProdutoRepository>();
-            services.AddScoped<IFornecedorRepository, FornecedorRepository>();
-            services.AddScoped<IEnderecoRepository, EnderecoRepository>();
+            services.ResolveDependencies();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -52,16 +48,22 @@ namespace DevIO.App
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/erro/500");
+                app.UseStatusCodePagesWithRedirects("/erro/{0}");
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            app.UseAuthentication();
+
+            app.UseGlobalizationConfig();
 
             app.UseMvc(routes =>
             {

@@ -1,38 +1,46 @@
-﻿using AutoMapper;
-using DevIO.App.ViewModels;
-using DevIO.Business.Interfaces;
-using DevIO.Business.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using DevIO.App.Extensions;
+using Microsoft.AspNetCore.Mvc;
+using DevIO.App.ViewModels;
+using DevIO.Business.Intefaces;
+using DevIO.Business.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace DevIO.App.Controllers
 {
-    public class ProdutosController : Controller
+    [Authorize]
+    public class ProdutosController : BaseController
     {
         private readonly IProdutoRepository _produtoRepository;
         private readonly IFornecedorRepository _fornecedorRepository;
+        private readonly IProdutoService _produtoService;
         private readonly IMapper _mapper;
 
-        public ProdutosController(IProdutoRepository produtoRepository,
-                                  IFornecedorRepository fornecedorRepository,
-                                  IMapper mapper)
+        public ProdutosController(IProdutoRepository produtoRepository, 
+                                  IFornecedorRepository fornecedorRepository, 
+                                  IMapper mapper, 
+                                  IProdutoService produtoService,
+                                  INotificador notificador) : base(notificador)
         {
             _produtoRepository = produtoRepository;
             _fornecedorRepository = fornecedorRepository;
             _mapper = mapper;
+            _produtoService = produtoService;
         }
 
+        [AllowAnonymous]
         [Route("lista-de-produtos")]
         public async Task<IActionResult> Index()
         {
             return View(_mapper.Map<IEnumerable<ProdutoViewModel>>(await _produtoRepository.ObterProdutosFornecedores()));
         }
 
+        [AllowAnonymous]
         [Route("dados-do-produto/{id:guid}")]
         public async Task<IActionResult> Details(Guid id)
         {
@@ -46,6 +54,7 @@ namespace DevIO.App.Controllers
             return View(produtoViewModel);
         }
 
+        [ClaimsAuthorize("Produto","Adicionar")]
         [Route("novo-produto")]
         public async Task<IActionResult> Create()
         {
@@ -54,6 +63,7 @@ namespace DevIO.App.Controllers
             return View(produtoViewModel);
         }
 
+        [ClaimsAuthorize("Produto", "Adicionar")]
         [Route("novo-produto")]
         [HttpPost]
         public async Task<IActionResult> Create(ProdutoViewModel produtoViewModel)
@@ -75,6 +85,7 @@ namespace DevIO.App.Controllers
             return RedirectToAction("Index");
         }
 
+        [ClaimsAuthorize("Produto", "Editar")]
         [Route("editar-produto/{id:guid}")]
         public async Task<IActionResult> Edit(Guid id)
         {
@@ -88,6 +99,7 @@ namespace DevIO.App.Controllers
             return View(produtoViewModel);
         }
 
+        [ClaimsAuthorize("Produto", "Editar")]
         [Route("editar-produto/{id:guid}")]
         [HttpPost]
         public async Task<IActionResult> Edit(Guid id, ProdutoViewModel produtoViewModel)
@@ -122,6 +134,7 @@ namespace DevIO.App.Controllers
             return RedirectToAction("Index");
         }
 
+        [ClaimsAuthorize("Produto", "Excluir")]
         [Route("excluir-produto/{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -135,6 +148,7 @@ namespace DevIO.App.Controllers
             return View(produto);
         }
 
+        [ClaimsAuthorize("Produto", "Excluir")]
         [Route("excluir-produto/{id:guid}")]
         [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
